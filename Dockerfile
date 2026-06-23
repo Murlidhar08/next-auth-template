@@ -27,16 +27,14 @@ FROM base AS builder
 WORKDIR /app
 
 # Environment variables needed for build
-ENV NEXT_PUBLIC_APP_NAME="Next Template"
-ENV NEXT_PUBLIC_APP_DESCRIPTION="This is Next template description"
-ENV BETTER_AUTH_URL="http://localhost:3000"
-ENV DATABASE_URL="postgresql://mock:mock@localhost:5432/mock"
-ENV BETTER_AUTH_SECRET="mock_secret_at_least_32_characters_long"
 ENV NODE_ENV=production
 
 COPY --from=prisma /app/node_modules ./node_modules
 COPY --from=prisma /app/prisma ./prisma
 COPY . .
+
+# Load env variables from .env.production
+RUN cp .env.production .env
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -67,6 +65,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # 🔥 REQUIRED: Prisma schema at runtime
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Copy environment variables for runtime
+COPY --from=builder --chown=nextjs:nodejs /app/.env ./.env
 
 USER nextjs
 
