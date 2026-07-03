@@ -19,14 +19,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   app:
-    build:
-      context: .
-      args:
-        - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
-        - NEXT_PUBLIC_APP_DESCRIPTION=${NEXT_PUBLIC_APP_DESCRIPTION}
-        - BETTER_AUTH_URL=${BETTER_AUTH_URL}
-        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-        - DATABASE_URL=${DATABASE_URL}
+    image: username/app:latest # MAKE THIS DYNAMIC BASED ON YOUR REGISTRY & IMAGE
     container_name: app
     env_file:
       - .env.production
