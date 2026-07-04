@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   prisma-studio:
-    image: node:24.15.0
+    image: node:24-alpine
     container_name: prisma-studio
     working_dir: /app
     volumes:

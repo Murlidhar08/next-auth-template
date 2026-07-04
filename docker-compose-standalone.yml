@@ -52,7 +52,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   prisma-studio:
-    image: chavda2772/property-hub:latest
+    image: node:24-alpine
     container_name: prisma-studio
     working_dir: /app
     command: npx prisma studio --port 5555 --browser none

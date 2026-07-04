@@ -1,5 +1,5 @@
 # Stage 1: Install dependencies
-FROM node:24.11.1-alpine AS deps
+FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -8,7 +8,7 @@ COPY prisma ./prisma
 RUN npm ci
 
 # Stage 2: Prisma & Build Base
-FROM node:24.11.1-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -31,7 +31,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 3: Production Dependencies
-FROM node:24.11.1-alpine AS prod-deps
+FROM node:24-alpine AS prod-deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -39,7 +39,7 @@ COPY prisma ./prisma
 RUN npm ci --omit=dev
 
 # Stage 4: Runner
-FROM node:24.11.1-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
