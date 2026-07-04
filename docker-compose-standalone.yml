@@ -1,4 +1,37 @@
 services:
+  app:
+    image: chavda2772/property-hub:latest
+    container_name: app
+    environment:
+      # Application
+      NEXT_PUBLIC_APP_NAME: "AppName"
+      NEXT_PUBLIC_APP_DESCRIPTION: "This is the application description."
+
+      # Better Auth
+      BETTER_AUTH_SECRET: "lMD1eol2MrTxIZixGYyjwT0G0DQJ6oLJ"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      BETTER_AUTH_TRUSTED_ORIGINS: "https://example.com,https://*.example.com"
+
+      # DATABASE
+      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
+
+      # Email Service
+      SMTP_HOST: "mail.example.com"
+      SMTP_PORT: 587
+      SMTP_USER: "user@example.com"
+      SMTP_PASS: "**PASSWORD**"
+      SMTP_SECURE: false
+      FROM_EMAIL: "user <user@example.com>"
+
+    ports:
+      - "3000:3000"
+    networks:
+      - prisma-network
+    restart: unless-stopped
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
   postgres_db:
     image: postgres:17.4
     hostname: postgres_db
@@ -18,28 +51,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  app:
-    image: username/app:latest # MAKE THIS DYNAMIC BASED ON YOUR REGISTRY & IMAGE
-    container_name: app
-    env_file:
-      - .env.production
-    ports:
-      - "3000:3000"
-    networks:
-      - prisma-network
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
-    depends_on:
-      postgres_db:
-        condition: service_healthy
-
   prisma-studio:
-    image: node:24.15.0
+    image: chavda2772/property-hub:latest
     container_name: prisma-studio
     working_dir: /app
-    volumes:
-      - .:/app
     command: npx prisma studio --port 5555 --browser none
     ports:
       - "5555:5555"
