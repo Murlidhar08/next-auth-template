@@ -11,6 +11,8 @@ if [ "$#" -lt 2 ]; then
 fi
 
 VERSION=$1
+
+# Update docker username and Project Image
 ENV_FILE=$2
 IMAGE="username/next-template"
 
