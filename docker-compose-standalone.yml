@@ -1,6 +1,6 @@
 services:
   app:
-    image: chavda2772/property-hub:latest
+    image: user/next_app:latest
     container_name: app
     environment:
       # Application

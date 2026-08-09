@@ -13,7 +13,7 @@ import { prisma } from "../prisma/prisma";
 // Template
 import { headers } from "next/headers";
 import { envServer } from "../env.server";
-import { Currency, ThemeMode } from "../generated/prisma/enums";
+import { Currency, ThemeMode, UserStatus } from "../generated/prisma/enums";
 import { getDeleteAccountEmailHtml } from "../templates/email-delete-account";
 import { getPasswordResetSuccessEmailHtml } from "../templates/email-password-reseted";
 import { getResetPasswordEmailHtml } from "../templates/email-reset-password";
@@ -252,7 +252,7 @@ export const auth = betterAuth({
 
         user: {
           ...user,
-          status: dbUser?.status,
+          status: dbUser?.status ?? UserStatus.pendingapproval,
           role: dbUser?.role,
           contactNo: dbUser?.contactNo,
           address: dbUser?.address,

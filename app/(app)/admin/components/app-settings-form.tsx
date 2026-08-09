@@ -158,6 +158,7 @@ export function AppSettingsForm({ initialData }: AppSettingsFormProps) {
                 title={tran("admin.app_config.email_auth")}
                 description={tran("admin.app_config.email_auth_desc")}
                 icon={<Fingerprint className="w-5 h-5" />}
+                hidden={true}
             >
                 <div className="space-y-6">
                     {/* Google */}
@@ -224,12 +225,14 @@ export function AppSettingsForm({ initialData }: AppSettingsFormProps) {
     );
 }
 
-function ConfigCard({ title, description, icon, children }: {
+function ConfigCard({ title, description, icon, children, hidden = false }: {
     title: string;
     description: string;
     icon: React.ReactNode;
     children: React.ReactNode;
+    hidden?: boolean;
 }) {
+    if (hidden) return null;
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}

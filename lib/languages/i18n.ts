@@ -18,8 +18,8 @@ export function getActiveLanguage(): Language {
     return activeLanguage;
 }
 
-export const t = (key: string, lang: string = "en", params?: Record<string, string>): string => {
-    const language = (lang as Language) || "en";
+export const t = (key: string, lang?: Language, params?: Record<string, string>): string => {
+    const language = lang || activeLanguage;
     const keys = key.split(".");
     let value = translations[language];
 

@@ -41,7 +41,7 @@ import { signOut, useSession } from "@/lib/auth/auth-client";
 import { envClient } from "@/lib/env.client";
 import { Currency, ThemeMode } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
-import { cn } from "@/lib/utils";
+import { cn, getFileUrl } from "@/lib/utils";
 import { getInitials } from "@/utility/common-function";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -76,36 +76,6 @@ export default function SettingsPage() {
   if (isPending)
     return <SettingsSkeleton />;
 
-  const currencyItems: Record<Currency, string> = {
-    USD: "USD ($)",
-    INR: "INR (₹)",
-    EUR: "EUR (€)",
-  };
-
-  const localeItems: Record<string, string> = {
-    "en-IN": "English (India)",
-    "en-US": "English (United States)",
-    "de-DE": "German (Germany)",
-    "fr-FR": "French (France)"
-  };
-
-  const dateFormatItems = [
-    { label: "DD/MM/YYYY", value: "dd/MM/yyyy" },
-    { label: "MM/DD/YYYY", value: "MM/dd/yyyy" },
-    { label: "YYYY-MM-DD", value: "yyyy-MM-dd" },
-    { label: "DD MMM, YYYY", value: "dd MMM, yyyy" },
-  ];
-
-  const timeFormatItems = [
-    { label: "12 Hour", value: "hh:mm a" },
-    { label: "24 Hour", value: "HH:mm" },
-  ];
-
-  const languageItems = [
-    { label: tran("languages.en"), value: "en" },
-    { label: tran("languages.hi"), value: "hi" },
-  ];
-
   const handleLogout = async () => {
     try {
       await signOut();
@@ -139,7 +109,7 @@ export default function SettingsPage() {
           <div className="relative group">
             <Avatar className="h-16 w-16 ring-4 ring-background transition-transform duration-500 group-hover:scale-110">
               <AvatarImage
-                src={session?.user?.image ?? undefined}
+                src={getFileUrl(session?.user?.image)}
                 alt={session?.user?.name ?? "User avatar"}
               />
               <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">
@@ -324,7 +294,7 @@ export default function SettingsPage() {
         <motion.div variants={itemVariants}>
           <Section title={tran("settings.appearance")}>
             <Row icon={PaintbrushIcon} label={tran("settings.theme_mode")}>
-              <div className="flex gap-1 bg-muted/50 rounded-2xl p-1.5 border-2 border-transparent focus-within:border-primary/10">
+              <div className="flex gap-1 bg-muted/50 rounded-2xl p-1.5 border-2 focus-within:border-primary/10">
                 {[
                   { id: ThemeMode.AUTO, icon: Laptop, label: tran("settings.auto") },
                   { id: ThemeMode.LIGHT, icon: Sun, label: tran("settings.light") },
@@ -407,6 +377,7 @@ export default function SettingsPage() {
 import { FooterButtons } from "@/components/footer-buttons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { containerVariants, itemVariants } from "@/lib/animations";
+import { currencyItems, dateFormatItems, languageItems, localeItems, timeFormatItems } from "@/lib/constants/common";
 
 function SettingsSkeleton() {
   return (

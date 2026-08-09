@@ -264,5 +264,8 @@ export default {
                 invalid_email_format: "Invalid email format. Use 'email@example.com' or 'Name <email@example.com>'",
             },
         },
+        storage_mng: {
+            title: "Storage Manager",
+        }
     }
 }

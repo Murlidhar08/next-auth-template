@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { ReactNode } from "react"
 
 // Components
+import { tran } from "@/lib/languages/i18n"
 import { cn } from "@/lib/utils"
 import { Badge } from "./ui/badge"
 import { Button, buttonVariants } from "./ui/button"
@@ -76,7 +77,7 @@ const BackHeader = ({
           layoutId="back-header-title"
           className="text-lg lg:text-2xl font-black tracking-tight truncate w-full text-center bg-linear-to-br from-foreground to-primary/80 bg-clip-text text-transparent"
         >
-          {title}
+          {title && tran(title)}
         </motion.h2>
 
         {description && (
@@ -88,7 +89,7 @@ const BackHeader = ({
               variant="secondary"
               className="h-5 rounded-full px-3 text-[9px] font-black uppercase tracking-[0.2em] bg-primary/10 text-primary border-primary/20"
             >
-              {description}
+              {description && tran(description)}
             </Badge>
           </motion.div>
         )}
@@ -124,7 +125,11 @@ const BackHeader = ({
                   )}
                 >
                   {item.icon && <span className="mr-2 opacity-80 group-focus/dropdown-menu-item:opacity-100 transition-opacity">{item.icon}</span>}
-                  {item.label}
+                  <span className={cn(
+                    item.destructive && "text-rose-600 focus:text-rose-600"
+                  )}>
+                    {tran(item.label)}
+                  </span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
