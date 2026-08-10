@@ -108,7 +108,11 @@ export function UserProfileHeader({ user, isEditing = false }: UserProfileHeader
                 >
                     <div className="h-24 w-24 sm:h-28 sm:w-28 absolute -inset-1.5 bg-linear-to-tr from-indigo-500 to-primary rounded-full blur opacity-25 group-hover:opacity-45 transition duration-500" />
                     <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 border-background shadow-2xl relative overflow-hidden">
-                        <AvatarImage src={getFileUrl(user.image)} className="rounded-full object-cover" />
+                        <AvatarImage
+                            src={getFileUrl(user.image)}
+                            className="rounded-full object-cover"
+                        />
+
                         <AvatarFallback className="rounded-full bg-primary/5 text-primary text-3xl font-black">
                             {getInitials(user.name)}
                         </AvatarFallback>
@@ -148,15 +152,13 @@ export function UserProfileHeader({ user, isEditing = false }: UserProfileHeader
                         </div>
                     )}
 
-                    {canEdit && (
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            accept="image/*"
-                            className="hidden"
-                        />
-                    )}
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept="image/*"
+                        className="hidden"
+                    />
                 </div>
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">

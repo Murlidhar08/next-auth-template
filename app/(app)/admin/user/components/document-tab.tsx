@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { getFileUrl } from "@/lib/utils";
 import { useDeleteUserDocument, useRenameUserDocument, useUserDocuments } from "@/tanstacks/user";
-import { Download, Eye, FileText, Maximize2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Download, Eye, FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -119,9 +119,6 @@ export default function DocumentTab({ userId }: DocumentTabProps) {
                                             </Button>
                                         } />
                                         <DropdownMenuContent align="end" className="rounded-2xl p-2 min-w-40 shadow-2xl border-border bg-card">
-                                            <DropdownMenuItem onClick={() => setPreviewDoc(doc)} className="rounded-xl flex items-center gap-2 py-2.5 font-bold cursor-pointer">
-                                                <Maximize2 size={16} /> Preview
-                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => handleDownload(doc)} className="rounded-xl flex items-center gap-2 py-2.5 font-bold cursor-pointer">
                                                 <Download size={16} /> Download
                                             </DropdownMenuItem>
@@ -146,13 +143,6 @@ export default function DocumentTab({ userId }: DocumentTabProps) {
                                         onClick={() => setPreviewDoc(doc)}
                                     >
                                         <Eye size={14} className="mr-2" /> Preview
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="rounded-xl h-9 text-xs font-black uppercase tracking-widest hover:bg-primary/5 hover:text-primary border-border"
-                                        onClick={() => handleDownload(doc)}
-                                    >
-                                        <Download size={14} className="mr-2" /> Download
                                     </Button>
                                 </div>
                             </Card>
