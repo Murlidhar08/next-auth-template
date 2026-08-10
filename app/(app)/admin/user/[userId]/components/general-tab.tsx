@@ -95,17 +95,19 @@ export default function GeneralTab({ user }: GeneralTabProps) {
             </Card>
 
             {/* Additional Information */}
-            <Card className="p-8 rounded-[2rem] border-border/40 bg-card/45 backdrop-blur-md shadow-lg overflow-hidden relative transition-all duration-300 hover:shadow-xl hover:border-amber-500/20">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500/30" />
-                <h3 className="text-sm font-black text-foreground/80 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                    <Briefcase size={16} className="text-amber-500" />
-                    Additional Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <InfoItem icon={<Briefcase size={18} />} label="Occupation" value={user.occupation || "Unknown"} />
-                    <InfoItem icon={<MapPin size={18} />} label="Address" value={user.address || "Unknown"} />
-                </div>
-            </Card>
+            {user.occupation || user.address && (
+                <Card className="p-8 rounded-[2rem] border-border/40 bg-card/45 backdrop-blur-md shadow-lg overflow-hidden relative transition-all duration-300 hover:shadow-xl hover:border-amber-500/20">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500/30" />
+                    <h3 className="text-sm font-black text-foreground/80 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                        <Briefcase size={16} className="text-amber-500" />
+                        Additional Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <InfoItem icon={<Briefcase size={18} />} label="Occupation" value={user.occupation || "Unknown"} />
+                        <InfoItem icon={<MapPin size={18} />} label="Address" value={user.address || "Unknown"} />
+                    </div>
+                </Card>
+            )}
 
             {/* Metadata */}
             <Card className="p-8 rounded-[2rem] border-border/40 bg-card/45 backdrop-blur-md shadow-lg overflow-hidden relative transition-all duration-300 hover:shadow-xl hover:border-emerald-500/20">
@@ -124,18 +126,19 @@ export default function GeneralTab({ user }: GeneralTabProps) {
             </Card>
 
             {/* Social Media Details */}
-            <Card className="p-8 rounded-[2rem] border-border/40 bg-card/45 backdrop-blur-md shadow-lg overflow-hidden relative transition-all duration-300 hover:shadow-xl hover:border-emerald-500/20">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500/30" />
-                <h3 className="text-sm font-black text-foreground/80 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                    <MessageCircle size={16} className="text-emerald-500" />
-                    Social Media Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <InfoItem
-                        icon={<MessageCircle size={18} />}
-                        label="WhatsApp"
-                        value={
-                            user.contactNo ? (
+            {user.contactNo && (
+                <Card className="p-8 rounded-[2rem] border-border/40 bg-card/45 backdrop-blur-md shadow-lg overflow-hidden relative transition-all duration-300 hover:shadow-xl hover:border-emerald-500/20">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500/30" />
+                    <h3 className="text-sm font-black text-foreground/80 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                        <MessageCircle size={16} className="text-emerald-500" />
+                        Social Media Details
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <InfoItem
+                            icon={<MessageCircle size={18} />}
+                            label="WhatsApp"
+                            value={
                                 <a
                                     href={sendWhatsappMessage(user.contactNo, `Hello, ${user.name}`)}
                                     target="_blank"
@@ -144,13 +147,11 @@ export default function GeneralTab({ user }: GeneralTabProps) {
                                 >
                                     Message
                                 </a>
-                            ) : (
-                                "No Contact Provided"
-                            )
-                        }
-                    />
-                </div>
-            </Card>
+                            }
+                        />
+                    </div>
+                </Card>
+            )}
         </div>
     );
 }
