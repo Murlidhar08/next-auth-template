@@ -1,7 +1,7 @@
 "use server";
 
 import { auth, getUserSession } from "@/lib/auth/auth";
-import { deleteFile, uploadFile } from "@/lib/file-operations";
+import { deleteDirectory, deleteFile, uploadFile } from "@/lib/file-operations";
 import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma/prisma";
 import { headers } from "next/headers";
@@ -209,7 +209,54 @@ export async function removeUserRole(userId: string, roleToRemove: string) {
 }
 
 export async function deleteUser(userId: string) {
+    const session = await getUserSession();
+    if (!session) throw new Error("Unauthorized");
+
+    // 1. Fetch user image and documents to delete physical files
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+            image: true,
+            userDocuments: {
+                select: { documentRelativePath: true }
+            }
+        }
+    });
+
+    if (user) {
+        // Delete profile image file if stored locally
+        if (user.image && !user.image.startsWith("http")) {
+            const oldRelativePath = user.image.replace("/api/files/", "").split("?")[0];
+            try {
+                await deleteFile(oldRelativePath);
+            } catch (e) {
+                console.error("Failed to delete user profile image during deleteUser:", e);
+            }
+        }
+
+        // Delete document files stored locally
+        if (user.userDocuments && user.userDocuments.length > 0) {
+            for (const doc of user.userDocuments) {
+                const docRelativePath = doc.documentRelativePath.replace("/api/files/", "").split("?")[0];
+                try {
+                    await deleteFile(docRelativePath);
+                } catch (e) {
+                    console.error("Failed to delete user document file during deleteUser:", e);
+                }
+            }
+        }
+
+        // Delete entire user document folder (document/${userId})
+        try {
+            await deleteDirectory(`document/${userId}`);
+        } catch (e) {
+            console.error("Failed to delete user document folder during deleteUser:", e);
+        }
+    }
+
+    // 2. Delete database records in transaction
     return await prisma.$transaction(async (tx) => {
+        await tx.userDocument.deleteMany({ where: { userId } });
         await tx.account.deleteMany({ where: { userId } });
         await tx.session.deleteMany({ where: { userId } });
         return tx.user.delete({

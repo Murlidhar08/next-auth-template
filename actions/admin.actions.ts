@@ -1,5 +1,6 @@
 "use server";
 
+import { deleteUser } from "@/actions/user.actions";
 import { getAppConfig } from "@/lib/app-config";
 import { auth, getUserSession } from "@/lib/auth/auth";
 import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
@@ -51,13 +52,7 @@ export async function comprehensiveDeleteUser(userId: string) {
         throw new Error("Unauthorized");
 
     try {
-        await prisma.$transaction(async (tx) => {
-            // 1. Delete the user (this cascades to Session, Account, TwoFactor, UserSettings)
-            await tx.user.delete({
-                where: { id: userId }
-            });
-        });
-
+        await deleteUser(userId);
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete user comprehensively:", error);
