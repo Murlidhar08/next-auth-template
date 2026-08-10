@@ -85,7 +85,7 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
         await handleAction(
             userId,
             () => authClient.admin.setRole({ userId, role: role as any }),
-            tran("admin.user_mng.msg.success_role_updated")
+            tran("admin.user_mng.msg.success_role_updated", { role })
         );
     };
 
@@ -155,7 +155,7 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
             case "admin":
                 return <Badge key={r} variant="secondary" className="bg-indigo-500/10 text-indigo-500 border-none text-[9px] font-black tracking-widest h-5 px-2">Admin</Badge>;
             case "user":
-                return <Badge key={r} variant="secondary" className="bg-amber-500/10 text-amber-500 border-none text-[9px] font-black tracking-widest h-5 px-2">User</Badge>;
+                return null;
             default:
                 return <Badge key={r} variant="secondary" className="bg-muted text-muted-foreground border-none text-[9px] font-black tracking-widest h-5 px-2">{role}</Badge>;
         }
@@ -272,7 +272,7 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
                                     ) : (
                                         <>
                                             <div className="p-2.5 bg-indigo-500/10 rounded-xl transition-colors">
-                                                <Shield size={18} className="text-indigo-600 group-focus:text-white" />
+                                                <Shield size={18} className="group-focus:text-white" />
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-[13px] tracking-tight">{tran("admin.user_mng.promote_to_admin")}</span>
