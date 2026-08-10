@@ -1,6 +1,5 @@
 "use client";
 
-import { removeUserProfile } from "@/actions/user.actions";
 import { BackHeader } from "@/components/back-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/auth-client";
+import { useRemoveUserProfile } from "@/tanstacks/user";
 import { Eye, EyeOff, Lock, Pencil, RefreshCw, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,6 +30,8 @@ export function UserHeader({ userId }: UserHeaderMenuProps) {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const removeUserProfileMutation = useRemoveUserProfile();
 
     const handleUpdatePassword = async () => {
         if (!newPassword) {
@@ -71,12 +73,12 @@ export function UserHeader({ userId }: UserHeaderMenuProps) {
 
     const removeProfile = async () => {
         try {
-            await removeUserProfile(userId)
-            toast.success("Profile removed successfully")
+            await removeUserProfileMutation.mutateAsync(userId);
+            toast.success("Profile removed successfully");
         } catch (error) {
-            toast.error("Failed to remove profile")
+            toast.error("Failed to remove profile");
         }
-    }
+    };
 
     return (
         <>

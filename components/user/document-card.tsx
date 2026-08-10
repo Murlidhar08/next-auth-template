@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteUserDocument, renameUserDocument } from "@/actions/user.actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn, getFileUrl } from "@/lib/utils";
+import { useDeleteUserDocument, useRenameUserDocument } from "@/tanstacks/user";
 import {
     Download,
     Eye,
@@ -47,13 +47,16 @@ export function DocumentCard({ document, isEditable = false }: DocumentCardProps
     const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+    const deleteDocumentMutation = useDeleteUserDocument();
+    const renameDocumentMutation = useRenameUserDocument();
+
     const handleDownload = () => {
-        const link = document.createElement('a');
+        const link = window.document.createElement('a');
         link.href = document.documentRelativePath;
         link.download = document.fileName;
-        document.body.appendChild(link);
+        window.document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        window.document.body.removeChild(link);
     };
 
     const handlePreview = () => {
@@ -63,7 +66,7 @@ export function DocumentCard({ document, isEditable = false }: DocumentCardProps
     const handleDelete = async () => {
         try {
             setIsDeleting(true);
-            await deleteUserDocument(document.id);
+            await deleteDocumentMutation.mutateAsync({ documentId: document.id, userId: document.userId });
             toast.success("Document deleted successfully");
             router.refresh();
         } catch (error) {
@@ -77,7 +80,7 @@ export function DocumentCard({ document, isEditable = false }: DocumentCardProps
         if (!newName.trim()) return;
         try {
             setIsRenaming(true);
-            await renameUserDocument(document.id, newName);
+            await renameDocumentMutation.mutateAsync({ documentId: document.id, newName, userId: document.userId });
             toast.success("Document renamed successfully");
             setIsRenameDialogOpen(false);
             router.refresh();

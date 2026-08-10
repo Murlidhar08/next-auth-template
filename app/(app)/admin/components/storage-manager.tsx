@@ -1,10 +1,5 @@
 "use client";
 
-import {
-    deleteStorageItem,
-    getStorageItems,
-    renameStorageItem
-} from "@/actions/storage.actions";
 import { DocumentPreview } from "@/components/document-preview";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,10 +11,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn, getFileUrl } from "@/lib/utils";
 import {
-    useMutation,
-    useQuery,
-    useQueryClient
-} from "@tanstack/react-query";
+    useDeleteStorageItem,
+    useRenameStorageItem,
+    useStorageItems
+} from "@/tanstacks/storage";
 import {
     ChevronDown,
     ChevronRight,
@@ -35,7 +30,6 @@ import {
     Trash2
 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 interface StorageItemProps {
     item: {
@@ -51,38 +45,14 @@ interface StorageItemProps {
 }
 
 const StorageItem = ({ item, depth, onRefresh }: StorageItemProps) => {
-    const queryClient = useQueryClient();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isRenameOpen, setIsRenameOpen] = useState(false);
     const [newName, setNewName] = useState(item.name);
 
-    const { data: children, isLoading, refetch } = useQuery({
-        queryKey: ["storage", item.path],
-        queryFn: () => getStorageItems(item.path),
-        enabled: item.isDir && isExpanded,
-    });
-
-    const renameMutation = useMutation({
-        mutationFn: () => renameStorageItem(item.path, newName),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["storage"] });
-            setIsRenameOpen(false);
-            toast.success("Item renamed successfully");
-            onRefresh();
-        },
-        onError: () => toast.error("Failed to rename item"),
-    });
-
-    const deleteMutation = useMutation({
-        mutationFn: () => deleteStorageItem(item.path, item.isDir),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["storage"] });
-            toast.success("Item deleted successfully");
-            onRefresh();
-        },
-        onError: () => toast.error("Failed to delete item"),
-    });
+    const { data: children, isLoading, refetch } = useStorageItems(item.path, item.isDir && isExpanded);
+    const renameMutation = useRenameStorageItem();
+    const deleteMutation = useDeleteStorageItem();
 
     const isImage = item.extension.match(/(jpg|jpeg|png|gif|webp)$/i);
     const isPDF = item.extension === ".pdf";
@@ -141,7 +111,7 @@ const StorageItem = ({ item, depth, onRefresh }: StorageItemProps) => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all"
-                        onClick={(e) => { e.stopPropagation(); if (confirm("Are you sure?")) deleteMutation.mutate(); }}
+                        onClick={(e) => { e.stopPropagation(); if (confirm("Are you sure?")) deleteMutation.mutate({ relativePath: item.path, isDir: item.isDir }); }}
                     >
                         <Trash2 size={14} />
                     </Button>
@@ -162,7 +132,7 @@ const StorageItem = ({ item, depth, onRefresh }: StorageItemProps) => {
                         />
                         <div className="flex gap-3">
                             <Button variant="ghost" className="flex-1 rounded-xl" onClick={() => setIsRenameOpen(false)}>Cancel</Button>
-                            <Button className="flex-1 rounded-xl font-black" onClick={() => renameMutation.mutate()}>Save Name</Button>
+                            <Button className="flex-1 rounded-xl font-black" onClick={() => renameMutation.mutate({ oldPath: item.path, newName })}>Save Name</Button>
                         </div>
                     </div>
                 </DialogContent>
@@ -202,10 +172,7 @@ const StorageItem = ({ item, depth, onRefresh }: StorageItemProps) => {
 };
 
 export const AdminStorageManager = () => {
-    const { data: items, isLoading, refetch } = useQuery({
-        queryKey: ["storage", "root"],
-        queryFn: () => getStorageItems("/"),
-    });
+    const { data: items, isLoading, refetch } = useStorageItems("/");
 
     return (
         <div className="space-y-6">

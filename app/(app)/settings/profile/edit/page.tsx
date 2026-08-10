@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm, UseFormRegisterReturn } from 'react-hook-form'
 import { toast } from 'sonner'
 
-import { removeUserProfile, uploadProfileImage } from '@/actions/user.actions'
 import { BackHeader } from '@/components/back-header'
 import { FooterButtons } from '@/components/footer-buttons'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -19,9 +18,8 @@ import { containerVariants, itemVariants } from '@/lib/animations'
 import { authClient } from '@/lib/auth/auth-client'
 import { tran } from '@/lib/languages/i18n'
 import { getFileUrl } from '@/lib/utils'
-import { useCurrentUser } from '@/tanstacks/user'
+import { useCurrentUser, useRemoveUserProfile, useUploadProfileImage } from '@/tanstacks/user'
 import { getInitials } from '@/utility/common-function'
-import { useQueryClient } from '@tanstack/react-query'
 
 type ProfileFormValues = {
   name: string
@@ -32,8 +30,9 @@ type ProfileFormValues = {
 
 export default function EditProfilePage() {
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const { data: user, isLoading } = useCurrentUser()
+  const { data: user, isLoading: isUserLoading } = useCurrentUser();
+  const uploadImageMutation = useUploadProfileImage();
+  const removeAvatarMutation = useRemoveUserProfile();
 
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
@@ -59,8 +58,7 @@ export default function EditProfilePage() {
     formData.append("file", file);
 
     try {
-      await uploadProfileImage(formData, user?.id);
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+      await uploadImageMutation.mutateAsync({ formData, userId: user?.id });
       toast.success(tran("profile.edit.msg.profile_updated_successfully"));
       router.refresh();
     } catch (error: any) {
@@ -78,14 +76,9 @@ export default function EditProfilePage() {
     if (isUploading || !user?.id) return;
     setIsUploading(true);
     try {
-      const success = await removeUserProfile(user.id);
-      if (success) {
-        queryClient.invalidateQueries({ queryKey: ["current-user"] });
-        toast.success("Profile picture removed successfully!");
-        router.refresh();
-      } else {
-        toast.error("Failed to remove profile picture.");
-      }
+      await removeAvatarMutation.mutateAsync(user.id);
+      toast.success("Profile picture removed successfully!");
+      router.refresh();
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Something went wrong.");
@@ -156,7 +149,7 @@ export default function EditProfilePage() {
     return () => clearTimeout(delayDebounceFn);
   }, [watchedUsername, user]);
 
-  if (isLoading) return <EditProfileSkeleton />;
+  if (isUserLoading) return <EditProfileSkeleton />;
 
   async function onSubmit(data: ProfileFormValues) {
     try {

@@ -27,7 +27,6 @@ import {
 import { useEffect, useState } from "react";
 
 
-import { upsertUserSettings } from "@/actions/user-settings.actions";
 import { useUserConfig } from "@/components/providers/user-config-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +41,7 @@ import { envClient } from "@/lib/env.client";
 import { Currency, ThemeMode } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
 import { cn, getFileUrl } from "@/lib/utils";
+import { useUpsertUserSettings } from "@/tanstacks/settings";
 import { getInitials } from "@/utility/common-function";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -61,6 +61,7 @@ export default function SettingsPage() {
   const [timeFormat, setTimeFormat] = useState(userConfig.timeFormat);
   const [language, setLanguage] = useState(userConfig.language);
   const [isDevMode, setIsDevMode] = useState(false);
+  const upsertSettingsMutation = useUpsertUserSettings();
 
   const searchParams = useSearchParams();
   const isDebug = searchParams.get("debug") === "true";
@@ -148,7 +149,7 @@ export default function SettingsPage() {
                   const v = value as Currency
                   setCurrency(v)
                   updateConfig({ currency: v })
-                  void upsertUserSettings({ currency: v })
+                  void upsertSettingsMutation.mutateAsync({ currency: v })
                   toast.success(tran("settings.msg.currency_updated"))
                 }}
               >
@@ -175,7 +176,7 @@ export default function SettingsPage() {
                   const v = value as string
                   setLocale(v)
                   updateConfig({ locale: v })
-                  void upsertUserSettings({ locale: v })
+                  void upsertSettingsMutation.mutateAsync({ locale: v })
                   toast.success(tran("settings.msg.locale_updated"))
                 }}
               >
@@ -200,7 +201,7 @@ export default function SettingsPage() {
                   if (!value) return
                   setDateFormat(value)
                   updateConfig({ dateFormat: value })
-                  void upsertUserSettings({ dateFormat: value })
+                  void upsertSettingsMutation.mutateAsync({ dateFormat: value })
                   toast.success(tran("settings.msg.date_format_updated"))
                 }}
               >
@@ -225,7 +226,7 @@ export default function SettingsPage() {
                   if (!value) return
                   setTimeFormat(value)
                   updateConfig({ timeFormat: value })
-                  void upsertUserSettings({ timeFormat: value })
+                  void upsertSettingsMutation.mutateAsync({ timeFormat: value })
                   toast.success(tran("settings.msg.time_format_updated"))
                 }}
               >
@@ -250,7 +251,7 @@ export default function SettingsPage() {
                   if (!value) return
                   setLanguage(value)
                   updateConfig({ language: value })
-                  void upsertUserSettings({ language: value })
+                  void upsertSettingsMutation.mutateAsync({ language: value })
                   toast.success(tran("settings.msg.language_updated"))
                 }}
               >
@@ -312,7 +313,7 @@ export default function SettingsPage() {
                     onClick={async () => {
                       setTheme(mode.id);
                       updateConfig({ theme: mode.id });
-                      await upsertUserSettings({ theme: mode.id });
+                      await upsertSettingsMutation.mutateAsync({ theme: mode.id });
                     }}
                   >
                     <mode.icon size={15} />

@@ -29,10 +29,10 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { comprehensiveDeleteUser } from "@/actions/admin.actions";
 import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
 import { getFileUrl } from "@/lib/utils";
+import { useComprehensiveDeleteUser } from "@/tanstacks/admin";
 import { getInitials } from "@/utility/common-function";
 import { useRouter } from "next/navigation";
 import { UserStatusModal } from "./user-status-modal";
@@ -57,6 +57,7 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
     const confirm = useConfirm();
     const prompt = usePrompt();
     const router = useRouter();
+    const deleteUserMutation = useComprehensiveDeleteUser();
 
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -68,13 +69,13 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
         try {
             const res = await action();
             if (res?.error) {
-                toast.error(res.error.message || res.error || tran("admin.user_mng.msg.error_something_went_wrong"));
-                return;
+                toast.error(res.error);
+            } else {
+                toast.success(successMsg);
+                refetch();
             }
-            toast.success(successMsg);
-            refetch();
-        } catch (err) {
-            toast.error(tran("admin.user_mng.msg.error_failed_action"));
+        } catch (err: any) {
+            toast.error(err.message || "Failed to perform action");
         } finally {
             setActionLoading(null);
         }
@@ -83,16 +84,16 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
     const setRole = async (userId: string, role: string) => {
         await handleAction(
             userId,
-            () => authClient.admin.setRole({ userId, role: role as UserRole }),
-            tran("admin.user_mng.msg.success_role_updated", { role })
+            () => authClient.admin.setRole({ userId, role: role as any }),
+            tran("admin.user_mng.msg.success_role_updated")
         );
     };
 
     const banUser = async (userId: string) => {
         const banReason = await prompt({
-            title: tran("admin.user_mng.ban_user_prompt_title"),
-            description: tran("admin.user_mng.ban_user_prompt_desc"),
-            placeholder: tran("admin.user_mng.ban_user_prompt_placeholder"),
+            title: tran("admin.user_mng.ban_user"),
+            description: tran("admin.user_mng.ban_reason_desc"),
+            placeholder: tran("admin.user_mng.ban_reason_placeholder"),
             confirmText: tran("admin.user_mng.ban_user"),
             destructive: true
         });
@@ -135,7 +136,7 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
 
         await handleAction(
             userId,
-            () => comprehensiveDeleteUser(userId),
+            () => deleteUserMutation.mutateAsync(userId),
             tran("admin.user_mng.msg.success_user_deleted")
         );
     };

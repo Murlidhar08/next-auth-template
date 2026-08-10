@@ -1,6 +1,5 @@
 "use client";
 
-import { uploadUserDocument } from "@/actions/user.actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -11,6 +10,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { userDocumentTypeItems } from "@/lib/constants/common";
+import { useUploadUserDocument } from "@/tanstacks/user";
 import { FileUp, RotateCw, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -26,6 +26,7 @@ export function DocumentUpload({ userId }: DocumentUploadProps) {
     const [isUploading, setIsUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [documentType, setDocumentType] = useState<string>("other");
+    const uploadUserDocumentMutation = useUploadUserDocument();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -52,7 +53,7 @@ export function DocumentUpload({ userId }: DocumentUploadProps) {
             formData.append("file", selectedFile);
             formData.append("documentType", documentType);
 
-            await uploadUserDocument(userId, formData);
+            await uploadUserDocumentMutation.mutateAsync({ userId, formData });
             toast.success("Document uploaded successfully");
             setSelectedFile(null);
             setDocumentType("other");

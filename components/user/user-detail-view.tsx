@@ -1,12 +1,12 @@
 "use client";
 
-import { removeUserRole } from "@/actions/user.actions";
 import AppTabs from "@/components/tab/app-tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn, getFileUrl } from "@/lib/utils";
+import { useRemoveUserRole } from "@/tanstacks/user";
 import { getInitials, getRoleBadgeColor } from "@/utility/common-function";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -59,6 +59,7 @@ function InfoItem({ icon, label, value, highlight }: { icon: ReactNode, label: s
 
 export function UserDetailView({ user, role }: UserDetailViewProps) {
   const router = useRouter();
+  const removeRoleMutation = useRemoveUserRole();
 
   const handleWhatsApp = () => {
     if (user.contact) {
@@ -73,8 +74,8 @@ export function UserDetailView({ user, role }: UserDetailViewProps) {
 
   const handleDeleteRole = async () => {
     try {
-      const result = await removeUserRole(user.id, role);
-      if (result.deletedUser) {
+      const result: any = await removeRoleMutation.mutateAsync({ userId: user.id, roleToRemove: role });
+      if (result?.deletedUser) {
         toast.success(`User and their ${role} role removed as no roles remained`);
       } else {
         toast.success(`${role.charAt(0).toUpperCase() + role.slice(1)} role removed successfully`);

@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteUserDocument, getUserDocuments, renameUserDocument } from "@/actions/user.actions";
 import { DocumentPreview } from "@/components/document-preview";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { getFileUrl } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDeleteUserDocument, useRenameUserDocument, useUserDocuments } from "@/tanstacks/user";
 import { Download, Eye, FileText, Maximize2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -29,35 +28,13 @@ interface DocumentTabProps {
 }
 
 export default function DocumentTab({ userId }: DocumentTabProps) {
-    const queryClient = useQueryClient();
     const [previewDoc, setPreviewDoc] = useState<any>(null);
     const [renameDoc, setRenameDoc] = useState<any>(null);
     const [newName, setNewName] = useState("");
 
-    const { data: documents = [], isLoading } = useQuery({
-        queryKey: ["user-documents", userId],
-        queryFn: () => getUserDocuments(userId)
-    });
-
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => deleteUserDocument(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["user-documents", userId] });
-            toast.success("Document deleted successfully");
-        },
-        onError: () => toast.error("Failed to delete document")
-    });
-
-    const renameMutation = useMutation({
-        mutationFn: ({ id, name }: { id: string, name: string }) => renameUserDocument(id, name),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["user-documents", userId] });
-            toast.success("Document renamed successfully");
-            setRenameDoc(null);
-            setNewName("");
-        },
-        onError: () => toast.error("Failed to rename document")
-    });
+    const { data: documents = [], isLoading } = useUserDocuments(userId);
+    const deleteMutation = useDeleteUserDocument();
+    const renameMutation = useRenameUserDocument();
 
     const handleRenameClick = (doc: any) => {
         setRenameDoc(doc);
@@ -152,7 +129,7 @@ export default function DocumentTab({ userId }: DocumentTabProps) {
                                                 <Pencil size={16} /> Rename
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                onClick={() => deleteMutation.mutate(doc.id)}
+                                                onClick={() => deleteMutation.mutate({ documentId: doc.id, userId })}
                                                 className="rounded-xl flex items-center gap-2 py-2.5 font-bold cursor-pointer focus:text-destructive focus:bg-destructive/10"
                                             >
                                                 <Trash2 size={16} /> Delete
@@ -213,7 +190,15 @@ export default function DocumentTab({ userId }: DocumentTabProps) {
                             <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold" onClick={() => setRenameDoc(null)}>Cancel</Button>
                             <Button
                                 className="flex-1 rounded-xl h-12 font-black shadow-lg shadow-primary/20"
-                                onClick={() => renameMutation.mutate({ id: renameDoc.id, name: newName })}
+                                onClick={() => {
+                                    renameMutation.mutate({ documentId: renameDoc.id, newName, userId }, {
+                                        onSuccess: () => {
+                                            toast.success("Document renamed successfully");
+                                            setRenameDoc(null);
+                                            setNewName("");
+                                        }
+                                    });
+                                }}
                             >
                                 {renameMutation.isPending ? "Renaming..." : "Save Name"}
                             </Button>

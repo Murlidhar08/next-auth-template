@@ -1,6 +1,6 @@
 "use client";
 
-import { checkUsernameUnique, createUser, updateUser } from "@/actions/user.actions";
+import { checkUsernameUnique } from "@/actions/user.actions";
 import { FooterButtons } from "@/components/footer-buttons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { DocumentList } from "@/components/user/document-list";
 import { DocumentUpload } from "@/components/user/document-upload";
 import { userStatusList } from "@/lib/constants/common";
 import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
+import { useCreateUser, useUpdateUser } from "@/tanstacks/user";
 import { getUniqueUserName } from "@/utility/common-function";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
@@ -26,6 +27,7 @@ import {
     ShieldCheck,
     User
 } from "lucide-react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -34,7 +36,7 @@ import * as z from "zod";
 
 const userSchema = z.object({
     name: z.string().min(2, "Name is required"),
-    email: z.string().email("Invalid email").optional().or(z.literal("")),
+    email: z.string().email("Invalid email"),
     contactNo: z.string().optional().or(z.literal("")),
     username: z.string().min(3, "Username must be at least 3 characters"),
     status: z.string(),
@@ -48,12 +50,15 @@ type UserFormValues = z.infer<typeof userSchema>;
 
 interface UserFormProps {
     initialData?: any;
+    backUrl?: Route
 }
 
-export default function UserForm({ initialData }: UserFormProps) {
+export default function UserForm({ initialData, backUrl }: UserFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const isEdit = !!initialData;
+    const createUserMutation = useCreateUser();
+    const updateUserMutation = useUpdateUser();
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
@@ -84,6 +89,15 @@ export default function UserForm({ initialData }: UserFormProps) {
         }
     };
 
+    const handleBack = () => {
+        if (!backUrl) {
+            router.back()
+        } else {
+            router.push(backUrl)
+            return;
+        }
+    }
+
     const onSubmit = async (values: UserFormValues) => {
         setLoading(true);
         try {
@@ -96,11 +110,11 @@ export default function UserForm({ initialData }: UserFormProps) {
             }
 
             if (isEdit) {
-                await updateUser(initialData.id, values);
+                await updateUserMutation.mutateAsync({ id: initialData.id, data: values });
                 toast.success("User updated successfully");
                 router.push(`/user/${initialData.id}` as any);
             } else {
-                await createUser(values);
+                await createUserMutation.mutateAsync(values);
                 toast.success("User created successfully");
                 router.push("/admin");
             }
@@ -278,7 +292,12 @@ export default function UserForm({ initialData }: UserFormProps) {
             )}
 
             <FooterButtons>
-                <Button variant="outline" type="button" onClick={() => router.back()} className="rounded-full px-10 h-14 font-black border-border shadow-xs hover:bg-muted transition-all">
+                <Button
+                    variant="outline"
+                    type="button"
+                    onClick={handleBack}
+                    className="rounded-full px-10 h-14 font-black border-border shadow-xs hover:bg-muted transition-all"
+                >
                     Cancel
                 </Button>
                 <Button type="submit" disabled={loading} className="rounded-full px-16 h-14 font-black shadow-xl shadow-primary/30 transition-all hover:scale-105">

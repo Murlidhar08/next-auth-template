@@ -1,11 +1,11 @@
 "use client";
 
-import { uploadProfileImage } from "@/actions/user.actions";
 import { DocumentPreview } from "@/components/document-preview";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/lib/auth/auth-client";
 import { cn, getFileUrl } from "@/lib/utils";
+import { useUploadProfileImage } from "@/tanstacks/user";
 import { getInitials, getRoleBadgeColor } from "@/utility/common-function";
 import { AtSign, Camera, Cog, Loader2, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface UserProfileHeaderProps {
-    user: any;
+    user?: any;
     isEditing?: boolean;
 }
 
@@ -21,11 +21,39 @@ export function UserProfileHeader({ user, isEditing = false }: UserProfileHeader
     const router = useRouter();
     const { data: sessionData } = useSession();
     const currentUser = sessionData?.user;
-    const canEdit = currentUser && (currentUser.id === user.id || currentUser.role === "admin");
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const uploadProfileImageMutation = useUploadProfileImage();
+
+    if (!user) {
+        return (
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-border/50">
+                <div className="flex items-center gap-6">
+                    <div className="relative group">
+                        <div className="h-24 w-24 sm:h-28 sm:w-28 absolute -inset-1.5 bg-linear-to-tr from-indigo-500 to-primary rounded-full blur opacity-25" />
+                        <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 border-background shadow-2xl relative overflow-hidden">
+                            <AvatarFallback className="rounded-full bg-primary/5 text-primary text-3xl font-black">
+                                NU
+                            </AvatarFallback>
+                        </Avatar>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-foreground">New User Profile</h1>
+                            <Badge variant="outline" className="h-6 gap-1 px-2.5 rounded-full border-emerald-500/20 bg-emerald-500/5 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
+                                Creating
+                            </Badge>
+                        </div>
+                        <p className="text-muted-foreground font-bold text-sm">Fill in user details to create a new profile</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const canEdit = currentUser && (currentUser.id === user.id || currentUser.role === "admin");
 
     const handleAvatarClick = () => {
         if (!canEdit || isUploading) return;
@@ -54,7 +82,7 @@ export function UserProfileHeader({ user, isEditing = false }: UserProfileHeader
         formData.append("file", file);
 
         try {
-            await uploadProfileImage(formData, user.id);
+            await uploadProfileImageMutation.mutateAsync({ formData, userId: user.id });
             toast.success("Profile picture updated successfully!");
             router.refresh();
         } catch (error: any) {

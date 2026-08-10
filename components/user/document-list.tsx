@@ -1,10 +1,9 @@
 "use client";
 
-import { getUserDocuments } from "@/actions/user.actions";
 import { Card } from "@/components/ui/card";
+import { useUserDocuments } from "@/tanstacks/user";
 import { AnimatePresence, motion } from "framer-motion";
 import { FileText, RotateCw } from "lucide-react";
-import { useEffect, useState } from "react";
 import { DocumentCard } from "./document-card";
 
 interface DocumentListProps {
@@ -14,27 +13,10 @@ interface DocumentListProps {
 }
 
 export function DocumentList({ userId, isEditable = false, documents: initialDocuments }: DocumentListProps) {
-    const [documents, setDocuments] = useState<any[]>(initialDocuments || []);
-    const [isLoading, setIsLoading] = useState(!initialDocuments);
+    const { data: fetchedDocuments = [], isLoading: isFetching } = useUserDocuments(userId);
 
-    useEffect(() => {
-        if (!initialDocuments) {
-            const fetchDocuments = async () => {
-                try {
-                    setIsLoading(true);
-                    const docs = await getUserDocuments(userId);
-                    setDocuments(docs);
-                } catch (error) {
-                    console.error("Failed to fetch documents", error);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-            fetchDocuments();
-        } else {
-            setDocuments(initialDocuments);
-        }
-    }, [userId, initialDocuments]);
+    const documents = initialDocuments || fetchedDocuments;
+    const isLoading = !initialDocuments && isFetching;
 
     const hasDocuments = documents.length > 0;
 
