@@ -171,6 +171,7 @@ export const auth = betterAuth({
       google: {
         clientId: envServer.GOOGLE_CLIENT_ID as string,
         clientSecret: envServer.GOOGLE_CLIENT_SECRET as string,
+        prompt: "select_account",
       }
     } : {}),
     ...(envServer.DISCORD_CLIENT_ID && envServer.DISCORD_CLIENT_SECRET ? {
@@ -263,7 +264,7 @@ export const auth = betterAuth({
       }
     }),
     multiSession({
-      maximumSessions: 3,
+      maximumSessions: 5,
     }),
     haveIBeenPwned({
       enabled: envServer.NODE_ENV === 'production',
