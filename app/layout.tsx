@@ -108,6 +108,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <Toaster
           position="top-center"
           expand={false}
+          richColors
+          closeButton
+          theme="light"
         />
 
         {/* Only when admin is impersonating */}

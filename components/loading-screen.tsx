@@ -22,13 +22,6 @@ const MESSAGES = [
     "Loading the magic...",
 ];
 
-const ANIMATION_VARIANTS = [
-    "bounce",
-    "float",
-    "pulse",
-    "spin-slow",
-] as const;
-
 export function LoadingScreen() {
     const [message, setMessage] = useState("");
     const [mounted, setMounted] = useState(false);
