@@ -1,5 +1,6 @@
 "use client";
 
+import { RecaptchaNotice } from "@/components/auth/recaptcha-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { containerVariants, floatAnimate, floatTransition, itemVariants } from "@/lib/animations";
@@ -11,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -18,6 +20,8 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const recaptcha = useGoogleReCaptcha();
+  const executeRecaptcha = recaptcha ? recaptcha.executeRecaptcha : undefined;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +30,24 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
+      let fetchOptions: { headers?: Record<string, string> } = {};
+      if (executeRecaptcha) {
+        try {
+          const captchaToken = await executeRecaptcha("forgot_password");
+          if (captchaToken) {
+            fetchOptions = {
+              headers: { "x-captcha-response": captchaToken },
+            };
+          }
+        } catch (captchaErr) {
+          console.error("CAPTCHA token generation error:", captchaErr);
+        }
+      }
+
       const result = await authClient.requestPasswordReset({
         email,
         redirectTo: "/reset-password",
-      });
+      }, fetchOptions);
 
       if (result.error) {
         setError(result.error.message || "Failed to send reset email");
@@ -122,6 +140,7 @@ export default function ForgotPasswordPage() {
                       />
                       <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors w-5 h-5" />
                     </div>
+                    <RecaptchaNotice />
                   </div>
 
                   <AnimatePresence mode="wait">

@@ -1,6 +1,7 @@
 "use client";
 
 // Lib
+import { RecaptchaNotice } from "@/components/auth/recaptcha-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { containerVariants, floatAnimate, floatTransition, itemVariants } from "@/lib/animations";
@@ -12,6 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { toast } from "sonner";
 
 export default function SignupPage() {
@@ -31,6 +33,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const recaptcha = useGoogleReCaptcha();
+  const executeRecaptcha = recaptcha ? recaptcha.executeRecaptcha : undefined;
 
   useEffect(() => {
     authClient.getSession()
@@ -115,12 +119,26 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      let fetchOptions: { headers?: Record<string, string> } = {};
+      if (executeRecaptcha) {
+        try {
+          const captchaToken = await executeRecaptcha("sign_up");
+          if (captchaToken) {
+            fetchOptions = {
+              headers: { "x-captcha-response": captchaToken },
+            };
+          }
+        } catch (captchaErr) {
+          console.error("CAPTCHA token generation error:", captchaErr);
+        }
+      }
+
       const result = await authClient.signUp.email({
         email,
         name,
         password,
         username,
-      });
+      }, fetchOptions);
 
       if (result.error) {
         setError(result.error.message || "Signup failed");
@@ -320,6 +338,7 @@ export default function SignupPage() {
                   </div>
                 </div>
               </div>
+              <RecaptchaNotice />
             </div>
 
             <Button

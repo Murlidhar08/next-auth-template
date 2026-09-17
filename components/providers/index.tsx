@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { ConfirmProvider } from "./confirm-provider";
 import { PromptProvider } from "./prompt-provider";
 import { QueryProvider } from "./query-provider";
+import { ReCaptchaProvider } from "./recaptcha-provider";
 
 /* ========================================================= */
 /* EXPORTS */
@@ -13,6 +14,7 @@ import { QueryProvider } from "./query-provider";
 export * from "./confirm-provider";
 export * from "./prompt-provider";
 export * from "./query-provider";
+export * from "./recaptcha-provider";
 
 /* ========================================================= */
 /* GLOBAL PROVIDER */
@@ -33,6 +35,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     </PromptProvider>
                 </ConfirmProvider>
             </QueryProvider>
-        </ThemeProvider>
+        </ThemeProvider >
     )
 }

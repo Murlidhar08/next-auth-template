@@ -3,7 +3,7 @@ import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { admin as adminPlugin, customSession, haveIBeenPwned, lastLoginMethod, multiSession, twoFactor, username } from "better-auth/plugins";
+import { admin as adminPlugin, customSession, haveIBeenPwned, lastLoginMethod, multiSession, twoFactor, username, captcha } from "better-auth/plugins";
 import { redirect } from "next/navigation";
 
 // Lib
@@ -271,7 +271,20 @@ export const auth = betterAuth({
       customPasswordCompromisedMessage: "This password has appeared in data breaches. Please choose a stronger, unique password."
     }),
     username(),
-    nextCookies()
+    nextCookies(),
+    ...((envServer.CPATCHA_SECRET_KEY || process.env.CPATCHA_SECRET_KEY || process.env.CAPTCHA_SECRET_KEY) ? [
+      captcha({
+        provider: "google-recaptcha",
+        secretKey: (envServer.CPATCHA_SECRET_KEY || process.env.CPATCHA_SECRET_KEY || process.env.CAPTCHA_SECRET_KEY)!,
+        endpoints: [
+          "/sign-in/email",
+          "/sign-in/username",
+          "/sign-up/email",
+          "/forget-password",
+          "/request-password-reset",
+        ],
+      }),
+    ] : []),
   ],
   databaseHooks: {
     user: {

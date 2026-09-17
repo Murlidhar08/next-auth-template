@@ -7,12 +7,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
+// Lib
 import { authClient, signIn } from "@/lib/auth/auth-client";
 import { envClient } from "@/lib/env.client";
 import { tran } from "@/lib/languages/i18n";
 
 // Components
+import { RecaptchaNotice } from "@/components/auth/recaptcha-notice";
 import { Input } from "@/components/ui/input";
 import { containerVariants, floatAnimate, floatTransition, itemVariants } from "@/lib/animations";
 import DiscordAuth from "./components/discord-auth";
@@ -39,6 +42,8 @@ function LoginFormContent({ providers }: LoginFormProps) {
   const [lastLogin, setLastLogin] = useState("");
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error");
+  const recaptcha = useGoogleReCaptcha();
+  const executeRecaptcha = recaptcha ? recaptcha.executeRecaptcha : undefined;
 
   const hasSocialLogin = providers.google || providers.discord || providers.facebook;
 
@@ -76,10 +81,27 @@ function LoginFormContent({ providers }: LoginFormProps) {
     setLoading(true);
 
     try {
+      let fetchOptions: { headers?: Record<string, string> } = {};
+
+      if (executeRecaptcha) {
+        try {
+          const captchaToken = await executeRecaptcha("sign_in");
+          if (captchaToken) {
+            fetchOptions = {
+              headers: {
+                "x-captcha-response": captchaToken,
+              },
+            };
+          }
+        } catch (captchaErr) {
+          console.error("reCAPTCHA execution error:", captchaErr);
+        }
+      }
+
       const isEmail = emailOrUsername.includes("@");
       const result = isEmail
-        ? await signIn.email({ email: emailOrUsername, password })
-        : await signIn.username({ username: emailOrUsername, password });
+        ? await signIn.email({ email: emailOrUsername, password }, fetchOptions)
+        : await signIn.username({ username: emailOrUsername, password }, fetchOptions);
 
       if (result.error) {
         if (result.error.code === "BANNED_USER") {
@@ -215,6 +237,8 @@ function LoginFormContent({ providers }: LoginFormProps) {
                     {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
+
+                <RecaptchaNotice />
               </div>
             </div>
 

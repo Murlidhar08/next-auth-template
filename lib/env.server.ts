@@ -34,6 +34,10 @@ const envSchema = zod.object({
   //  Facebook
   FACEBOOK_CLIENT_ID: zod.string().optional(),
   FACEBOOK_CLIENT_SECRET: zod.string().optional(),
+
+  //  Captcha
+  CAPTCHA_SITE_KEY: zod.string().optional(),
+  CPATCHA_SECRET_KEY: zod.string().optional()
 })
 
 /**
