@@ -30,6 +30,22 @@ export const auth = betterAuth({
     envServer.BETTER_AUTH_URL,
     ...(envServer.BETTER_AUTH_TRUSTED_ORIGINS ? envServer.BETTER_AUTH_TRUSTED_ORIGINS.split(",") : []),
   ],
+  rateLimit: {
+    enabled: envServer.NODE_ENV == 'production',
+    window: 10,
+    max: 100,
+
+    // Choose "database" or a secondary redis storage instead of "memory" for production
+    storage: "database",
+    modelName: "rate_limit", // The DB table/model name where limits are tracked
+
+    // 2. Custom Endpoint Rules overrides
+    customRules: {
+      "/sign-in": { window: 10, max: 3 },     // Stricter bounds on login
+      "/sign-up": { window: 10, max: 3 },     // Prevent malicious bot sign-ups
+      "/forget-password": { window: 60, max: 2 }, // High security / low volume threshold
+    },
+  },
 
   database: prismaAdapter(prisma, {
     provider: "postgresql",
