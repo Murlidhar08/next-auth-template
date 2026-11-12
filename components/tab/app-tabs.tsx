@@ -3,10 +3,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LoadingScreen } from "../loading-screen";
 import { TabItem } from "../navbar/tab-item";
-import { useMobileTab, useSetMobileTabConfig } from "../providers/mobile-tab-provider";
+import { useMobileTabActionsContext, useSetMobileTabConfig } from "../providers/mobile-tab-provider";
 import MobileNav from "./mobile-tab";
 
 interface AppTabsProps {
@@ -40,16 +40,22 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
         return () => window.removeEventListener("hashchange", handleHashChange);
     }, [tabs]);
 
-    const handleTabChange = (value: string) => {
+    const handleTabChange = useCallback((value: string) => {
         setActiveTab(value);
         window.history.replaceState(null, "", `#${value}`);
-    };
+    }, []);
 
-    const mobileTabContext = useMobileTab();
+    const mobileTabActions = useMobileTabActionsContext();
+    const hasMobileTab = Boolean(mobileTabActions);
+
     const tabNavItems = useMemo(
         () =>
             tabs.map((tab) => ({
-                ...tab,
+                id: tab.id,
+                label: tab.label,
+                icon: tab.icon,
+                badgeCount: tab.badgeCount,
+                hidden: tab.hidden,
                 href: `#${tab.id}`,
                 active: activeTab === tab.id,
             })),
@@ -57,7 +63,7 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
     );
 
     useSetMobileTabConfig(
-        mobileTabContext
+        hasMobileTab
             ? {
                   navItems: tabNavItems,
                   onChange: handleTabChange,
@@ -147,7 +153,7 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
             </div>
 
             {/* Mobile Nav: rendered standalone only when outside MobileTabProvider */}
-            {!mobileTabContext && (
+            {!hasMobileTab && (
                 <MobileNav
                     onChange={handleTabChange}
                     navItems={tabNavItems}
