@@ -64,9 +64,7 @@ export function getLocalPackageVersion(): string {
  * Checks GitHub for latest version from Releases, falling back to package.json.
  */
 export async function checkForUpdates(): Promise<SystemUpdateStatus> {
-  const repo = process.env.GITHUB_REPOSITORY
-    ? normalizeRepo(process.env.GITHUB_REPOSITORY)
-    : normalizeRepo(DEFAULT_REPO);
+  const repo = normalizeRepo(DEFAULT_REPO);
 
   const currentVersion = getLocalPackageVersion();
 
