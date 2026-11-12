@@ -25,7 +25,8 @@ export function normalizeRepo(rawInput: string): string {
  * Parses a semver string into [major, minor, patch] numbers.
  */
 export function parseSemver(v: string): [number, number, number] {
-  const clean = v.replace(/^v/, "").trim();
+  if (!v) return [0, 0, 0];
+  const clean = v.replace(/^v/, "").trim().split("-")[0].split("+")[0];
   const parts = clean.split(".").map((n) => parseInt(n, 10) || 0);
   return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
 }
@@ -60,13 +61,22 @@ export function getLocalPackageVersion(): string {
   return "0.0.1";
 }
 
+interface VersionCandidate {
+  version: string;
+  source: string;
+  publishedAt?: string;
+}
+
 /**
- * Checks GitHub for latest version from Releases, falling back to package.json.
+ * Checks GitHub for the latest version across Releases, Tags, Version Branches,
+ * and remote package.json.
+ * If fetching fails, captures and surfaces the exact error rather than predicting
+ * or defaulting to the current version.
  */
 export async function checkForUpdates(): Promise<SystemUpdateStatus> {
-  const repo = normalizeRepo(DEFAULT_REPO);
-
+  const repo = normalizeRepo(process.env.GITHUB_REPOSITORY || DEFAULT_REPO);
   const currentVersion = getLocalPackageVersion();
+  const hasWebhook = Boolean(process.env.UPDATE_WEBHOOK_URL?.trim().length);
 
   const headers: Record<string, string> = {
     "User-Agent": "Next-Template-AutoUpdate/1.0",
@@ -77,59 +87,147 @@ export async function checkForUpdates(): Promise<SystemUpdateStatus> {
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
 
-  let latestVersion = currentVersion;
-  let publishedAt: string | undefined;
+  const candidates: VersionCandidate[] = [];
+  const errors: string[] = [];
 
   // 1. Check GitHub Latest Release
   try {
     const releaseRes = await fetch(
       `https://api.github.com/repos/${repo}/releases/latest`,
-      { headers, next: { revalidate: 300 } }
+      { headers, cache: "no-store" }
     );
 
     if (releaseRes.ok) {
       const release = await releaseRes.json();
       if (release.tag_name) {
-        latestVersion = release.tag_name.replace(/^v/, "").trim();
-        publishedAt = release.published_at;
+        candidates.push({
+          version: release.tag_name.replace(/^v/, "").trim(),
+          source: "GitHub Release",
+          publishedAt: release.published_at,
+        });
+      }
+    } else if (releaseRes.status === 403) {
+      const body = await releaseRes.json().catch(() => null);
+      errors.push(
+        body?.message?.includes("rate limit")
+          ? "GitHub API rate limit exceeded (403)"
+          : `GitHub API forbidden (403): ${body?.message || "Access denied"}`
+      );
+    } else if (releaseRes.status !== 404) {
+      errors.push(`GitHub Releases returned status ${releaseRes.status}`);
+    }
+  } catch (err) {
+    errors.push(err instanceof Error ? err.message : "Failed to fetch GitHub releases");
+  }
+
+  // 2. Check GitHub Tags (in case tags are created without formal Releases)
+  try {
+    const tagsRes = await fetch(
+      `https://api.github.com/repos/${repo}/tags?per_page=20`,
+      { headers, cache: "no-store" }
+    );
+
+    if (tagsRes.ok) {
+      const tags = (await tagsRes.json()) as Array<{ name: string }>;
+      if (Array.isArray(tags)) {
+        for (const tag of tags) {
+          const clean = tag.name?.replace(/^v/, "").trim();
+          if (clean && /^\d+(\.\d+)+/.test(clean)) {
+            candidates.push({
+              version: clean,
+              source: `Git Tag (${tag.name})`,
+            });
+          }
+        }
+      }
+    } else if (tagsRes.status === 403 && !errors.some((e) => e.includes("403"))) {
+      errors.push("GitHub API rate limit exceeded (403)");
+    }
+  } catch {
+    // Ignore secondary tag check errors if other checks succeed
+  }
+
+  // 3. Check GitHub Branches (version branches such as v0.0.2 created by CI/CD)
+  try {
+    const branchesRes = await fetch(
+      `https://api.github.com/repos/${repo}/branches?per_page=30`,
+      { headers, cache: "no-store" }
+    );
+
+    if (branchesRes.ok) {
+      const branches = (await branchesRes.json()) as Array<{ name: string }>;
+      if (Array.isArray(branches)) {
+        for (const branch of branches) {
+          const match = branch.name?.match(/^v?(\d+\.\d+(?:\.\d+)?)/);
+          if (match && match[1]) {
+            candidates.push({
+              version: match[1],
+              source: `Version Branch (${branch.name})`,
+            });
+          }
+        }
       }
     }
   } catch {
-    // Release check failed or no releases found
+    // Ignore secondary branch check errors
   }
 
-  // 2. Fallback: package.json on target branch if no release available
-  if (latestVersion === currentVersion) {
-    try {
-      const rawPkgRes = await fetch(
-        `https://raw.githubusercontent.com/${repo}/${encodeURIComponent(BRANCH)}/package.json`,
-        {
-          headers: { "User-Agent": "Next-Template-AutoUpdate/1.0" },
-          next: { revalidate: 300 },
-        }
-      );
-
-      if (rawPkgRes.ok) {
-        const remotePkg = await rawPkgRes.json();
-        if (remotePkg.version) {
-          latestVersion = remotePkg.version.replace(/^v/, "").trim();
-        }
+  // 4. Check remote package.json on target branch (main)
+  try {
+    const rawPkgRes = await fetch(
+      `https://raw.githubusercontent.com/${repo}/${encodeURIComponent(BRANCH)}/package.json?t=${Date.now()}`,
+      {
+        headers: { "User-Agent": "Next-Template-AutoUpdate/1.0" },
+        cache: "no-store",
       }
-    } catch {
-      // package.json fallback failed
+    );
+
+    if (rawPkgRes.ok) {
+      const remotePkg = await rawPkgRes.json();
+      if (remotePkg.version) {
+        candidates.push({
+          version: remotePkg.version.replace(/^v/, "").trim(),
+          source: `${BRANCH} branch package.json`,
+        });
+      }
+    } else if (rawPkgRes.status !== 404) {
+      errors.push(`Remote package.json returned status ${rawPkgRes.status}`);
     }
+  } catch (err) {
+    errors.push(err instanceof Error ? err.message : "Failed to fetch remote package.json");
   }
 
-  const hasUpdate = compareSemver(currentVersion, latestVersion) > 0;
-  const hasWebhook = Boolean(process.env.UPDATE_WEBHOOK_URL?.trim().length);
+  // Determine latest version from collected candidates
+  if (candidates.length > 0) {
+    // Sort descending by semver to find highest version
+    candidates.sort((a, b) => compareSemver(b.version, a.version));
+    const highest = candidates[0];
+
+    const hasUpdate = compareSemver(currentVersion, highest.version) > 0;
+
+    return {
+      currentVersion,
+      latestVersion: highest.version,
+      hasUpdate,
+      publishedAt: highest.publishedAt,
+      checkedAt: new Date().toISOString(),
+      hasWebhook,
+      source: highest.source,
+    };
+  }
+
+  // No candidates could be fetched - surface the exact error rather than predicting/defaulting
+  const combinedError = errors.length > 0
+    ? errors[0]
+    : `Unable to retrieve remote version from ${repo}. Please verify repository access.`;
 
   return {
     currentVersion,
-    latestVersion,
-    hasUpdate,
-    publishedAt,
+    latestVersion: "",
+    hasUpdate: false,
     checkedAt: new Date().toISOString(),
     hasWebhook,
+    error: combinedError,
   };
 }
 
