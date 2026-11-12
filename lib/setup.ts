@@ -9,15 +9,16 @@ let lastLoggedToken: string | null = null;
  */
 function printSetupTokenLog(token: string, source: string) {
   const line = "═".repeat(68);
-  console.log(`\n╔${line}╗`);
-  console.log(`║                    FIRST-TIME INSTANCE SETUP                       ║`);
-  console.log(`║                                                                    ║`);
-  console.log(`║  A setup token is required to initialize the administrator account.║`);
-  console.log(`║  SETUP_TOKEN (${source.padEnd(28)}):               ║`);
-  console.log(`║  >>> ${token.padEnd(58)} <<< ║`);
-  console.log(`║                                                                    ║`);
-  console.log(`║  Navigate to /setup and paste this token to complete installation.  ║`);
-  console.log(`╚${line}╝\n`);
+  console.info(`${line}`);
+  console.info(`                    FIRST-TIME INSTANCE SETUP                       `);
+  console.info(``);
+  console.info(`  A setup token is required to initialize the administrator account.`);
+  console.info(`  SETUP_TOKEN (${source}):`);
+  console.info(``);
+  console.info(`  ${token}`);
+  console.info(``);
+  console.info(`  Navigate to /setup and paste this token to complete installation.`);
+  console.info(`${line}`);
 }
 
 /**
@@ -115,7 +116,7 @@ export async function clearSetupToken(): Promise<void> {
   try {
     await prisma.verification.delete({
       where: { id: "setup_token" },
-    }).catch(() => {});
+    }).catch(() => { });
   } catch {
     // Ignore cleanup error
   }
