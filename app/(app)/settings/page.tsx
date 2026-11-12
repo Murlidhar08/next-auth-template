@@ -121,6 +121,32 @@ export default function SettingsPage() {
         {/* GENERAL */}
         <motion.div variants={itemVariants}>
           <Section title={tran("settings.general")}>
+            {/* Language */}
+            <Row icon={Languages} label={tran("settings.language")}>
+              <Select
+                items={languageItems}
+                value={language}
+                onValueChange={(value) => {
+                  if (!value) return
+                  setLanguage(value)
+                  updateConfig({ language: value })
+                  void upsertSettingsMutation.mutateAsync({ language: value })
+                  toast.success(tran("settings.msg.language_updated"))
+                }}
+              >
+                <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl shadow-2xl">
+                  {languageItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Row>
+
             {/* Currency */}
             <Row icon={IndianRupee} label={tran("settings.currency")}>
               <Select
@@ -148,33 +174,7 @@ export default function SettingsPage() {
               </Select>
             </Row>
 
-            {/* Locale */}
-            <Row icon={Globe} label={tran("settings.locale")}>
-              <Select
-                items={localeItems}
-                value={locale}
-                onValueChange={(value) => {
-                  if (!value) return
-                  const v = value as string
-                  setLocale(v)
-                  updateConfig({ locale: v })
-                  void upsertSettingsMutation.mutateAsync({ locale: v })
-                  toast.success(tran("settings.msg.locale_updated"))
-                }}
-              >
-                <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl shadow-2xl">
-                  {Object.entries(localeItems).map(([key, value]) => (
-                    <SelectItem key={key} value={key} className="rounded-lg font-medium">
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Row>
-
+            {/* Date Format */}
             <Row icon={Calendar} label={tran("settings.date_format")}>
               <Select
                 items={dateFormatItems}
@@ -200,6 +200,7 @@ export default function SettingsPage() {
               </Select>
             </Row>
 
+            {/* Time Format */}
             <Row icon={Clock} label={tran("settings.time_format")}>
               <Select
                 items={timeFormatItems}
@@ -225,25 +226,27 @@ export default function SettingsPage() {
               </Select>
             </Row>
 
-            <Row icon={Languages} label={tran("settings.language")}>
+            {/* Locale */}
+            <Row icon={Globe} label={tran("settings.locale")}>
               <Select
-                items={languageItems}
-                value={language}
+                items={localeItems}
+                value={locale}
                 onValueChange={(value) => {
                   if (!value) return
-                  setLanguage(value)
-                  updateConfig({ language: value })
-                  void upsertSettingsMutation.mutateAsync({ language: value })
-                  toast.success(tran("settings.msg.language_updated"))
+                  const v = value as string
+                  setLocale(v)
+                  updateConfig({ locale: v })
+                  void upsertSettingsMutation.mutateAsync({ locale: v })
+                  toast.success(tran("settings.msg.locale_updated"))
                 }}
               >
                 <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl shadow-2xl">
-                  {languageItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
-                      {item.label}
+                  {Object.entries(localeItems).map(([key, value]) => (
+                    <SelectItem key={key} value={key} className="rounded-lg font-medium">
+                      {value}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -312,11 +315,6 @@ export default function SettingsPage() {
         <motion.div variants={itemVariants}>
           <Section title={tran("settings.security_privacy")}>
             <Row
-              icon={Link2Icon}
-              label={tran("settings.linked_accounts")}
-              href="/settings/link-account"
-            />
-            <Row
               icon={LockKeyhole}
               label={tran("settings.safety_security")}
               href="/settings/security"
@@ -325,6 +323,11 @@ export default function SettingsPage() {
               icon={KeyRoundIcon}
               label={tran("settings.active_sessions")}
               href="/settings/session-management"
+            />
+            <Row
+              icon={Link2Icon}
+              label={tran("settings.linked_accounts")}
+              href="/settings/link-account"
             />
             <Row
               icon={Skull}
