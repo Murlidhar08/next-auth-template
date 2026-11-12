@@ -3,9 +3,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LoadingScreen } from "../loading-screen";
 import { TabItem } from "../navbar/tab-item";
+import { useMobileTab, useSetMobileTabConfig } from "../providers/mobile-tab-provider";
 import MobileNav from "./mobile-tab";
 
 interface AppTabsProps {
@@ -43,6 +44,26 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
         setActiveTab(value);
         window.history.replaceState(null, "", `#${value}`);
     };
+
+    const mobileTabContext = useMobileTab();
+    const tabNavItems = useMemo(
+        () =>
+            tabs.map((tab) => ({
+                ...tab,
+                href: `#${tab.id}`,
+                active: activeTab === tab.id,
+            })),
+        [tabs, activeTab]
+    );
+
+    useSetMobileTabConfig(
+        mobileTabContext
+            ? {
+                  navItems: tabNavItems,
+                  onChange: handleTabChange,
+              }
+            : {}
+    );
 
     // Drag to scroll logic
     const tabsListRef = useRef<HTMLDivElement>(null);
@@ -125,15 +146,13 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
                 </TabsList>
             </div>
 
-            {/* Mobile Nav */}
-            <MobileNav
-                onChange={handleTabChange}
-                navItems={tabs.map(tab => ({
-                    ...tab,
-                    href: `#${tab.id}`,
-                    active: activeTab === tab.id
-                }))}
-            />
+            {/* Mobile Nav: rendered standalone only when outside MobileTabProvider */}
+            {!mobileTabContext && (
+                <MobileNav
+                    onChange={handleTabChange}
+                    navItems={tabNavItems}
+                />
+            )}
 
             {/* Tab content */}
             {tabs.map((tab) => (

@@ -12,6 +12,7 @@ import { envServer } from "@/lib/env.server";
 
 import AppIconsMetaTags from "@/components/app-icons-metatags";
 import { ImpersonationIndicator } from "@/components/auth/impersonation-indicator";
+import { PwaPinchZoomPreventer } from "@/components/pwa-pinch-zoom-preventer";
 import { AppProviders } from "@/components/providers";
 import NextTopLoader from 'nextjs-toploader';
 
@@ -28,11 +29,16 @@ const geistMono = Geist_Mono({
 });
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: 'white' },
     { media: '(prefers-color-scheme: dark)', color: 'black' },
   ],
-}
+};
 
 export const metadata: Metadata = {
   title: envClient.NEXT_PUBLIC_APP_NAME,
@@ -107,6 +113,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           {children}
         </AppProviders>
 
+        {/* Prevent PWA pinch zooming for native feel */}
+        <PwaPinchZoomPreventer />
+
         {/* Toast Container */}
         <Toaster
           position="top-center"
@@ -114,6 +123,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           richColors
           closeButton
           theme="light"
+          swipeDirections={["left", "right"]}
         />
 
         {/* Only when admin is impersonating */}
