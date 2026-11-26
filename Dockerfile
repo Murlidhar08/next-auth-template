@@ -32,8 +32,8 @@ COPY . .
 # Only build-essential flags (no runtime secrets, URLs, or branding variables)
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_APP_NAME="Property Hub" \
-    NEXT_PUBLIC_APP_DESCRIPTION="Property Hub is your all-in-one platform to manage real estate listings, clients, and agents effortlessly." \
+    NEXT_PUBLIC_APP_NAME="App Name" \
+    NEXT_PUBLIC_APP_DESCRIPTION="This is the application description" \
     IS_DOCKER_BUILD=true
 
 # Generate Prisma client
