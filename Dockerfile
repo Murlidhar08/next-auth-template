@@ -32,8 +32,8 @@ COPY . .
 # Only build-essential flags (no runtime secrets, URLs, or branding variables)
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_APP_NAME="App Name" \
-    NEXT_PUBLIC_APP_DESCRIPTION="This is the application description" \
+    NEXT_PUBLIC_APP_NAME="Property Hub" \
+    NEXT_PUBLIC_APP_DESCRIPTION="Property Hub is your all-in-one platform to manage real estate listings, clients, and agents effortlessly." \
     IS_DOCKER_BUILD=true
 
 # Generate Prisma client
@@ -83,15 +83,14 @@ COPY --from=pro-deps --chown=node:node /app/node_modules ./node_modules
 
 RUN mkdir -p /app/uploads \
     && chown -R node:node /app/uploads \
-    && chmod -R 775 /app/uploads
+    && chmod -R 777 /app/uploads
 
 # Persistent uploads directory
 VOLUME ["/app/uploads"]
 
 EXPOSE 3000
 
-# Run as non-root user
-USER node
-
+# Start as root so bootstrap.sh can apply permissions to mounted /app/uploads volumes,
+# then drop privileges to the unprivileged 'node' user via su-exec.
 ENTRYPOINT ["bootstrap.sh"]
 CMD ["node", "server.js"]
